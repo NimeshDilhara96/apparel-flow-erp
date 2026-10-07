@@ -11,150 +11,124 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// =========================================
-// ENUMS
-// =========================================
-
-enum UserRole {
+// Enum 
+enum Role {
   cutting_supervisor
   cutting_verifier
   sewing_supervisor
 }
 
 enum OrderStatus {
-  CUTTING_IN_PROGRESS
+  CUTTING_IN_PROGRESS // Added: Assessment 6. MANUFACTURING STATE MACHINE
   PENDING_VERIFICATION
   VERIFIED
   REJECTED
 }
 
-enum VerificationStatus {
-  GREEN   // Actual == Expected (Match)
-  YELLOW  // Actual > Expected (Excess)
-  RED     // Actual < Expected (Shortage)
+enum ItemStatus {
+  GREEN
+  YELLOW
+  RED
 }
 
-enum VerificationDecision {
+enum Decision {
   APPROVED
   REJECTED
 }
 
-// =========================================
-// USERS — Factory Personnel with RBAC
-// =========================================
-
+// 1. users වගුව
 model User {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   email         String   @unique
-  passwordHash  String   @map("password_hash")
-  role          UserRole
-  fullName      String   @map("full_name")
-  createdAt     DateTime @default(now()) @map("created_at")
+  password_hash String
+  role          Role
+  full_name     String
+  created_at    DateTime @default(now())
 
-  // Relations
-  createdOrders     CuttingOrder[]    @relation("OrderCreator")
-  verificationLogs  VerificationLog[] @relation("Verifier")
+  cutting_orders    CuttingOrder[]
+  verification_logs VerificationLog[]
 
   @@map("users")
 }
 
-// =========================================
-// RECIPES — Bill of Materials (Pre-Seeded)
-// =========================================
-
+// 2. recipes 
 model Recipe {
-  id              String  @id @default(cuid())
-  recipeCode      String  @unique @map("recipe_code")     // e.g. "REC-BL01"
-  name            String                                    // e.g. "Casual Blouse"
-  category        String                                    // e.g. "Blouse", "Crop Top"
-  stdFabricYards  Float   @map("std_fabric_yards")          // Standard fabric per piece (yards)
-  wastageCap      Float   @map("wastage_cap")               // Max wastage % allowed
+  id               String   @id @default(uuid())
+  recipe_code      String   @unique
+  name             String
+  category         String
+  std_fabric_yards Float
+  wastage_cap      Float
 
-  // Relations
-  components    RecipeComponent[]
-  cuttingOrders CuttingOrder[]
+  components       RecipeComponent[]
+  orders           CuttingOrder[]
 
   @@map("recipes")
 }
 
-// =========================================
-// RECIPE COMPONENTS — Cut Parts per Garment
-// =========================================
-
+// 3. recipe_components 
 model RecipeComponent {
-  id               String @id @default(cuid())
-  recipeId         String @map("recipe_id")
-  componentName    String @map("component_name")       // e.g. "Front Body Panel"
-  piecesPerGarment Int    @map("pieces_per_garment")   // e.g. 2 for Sleeve Cuffs
+  id                 String  @id @default(uuid())
+  recipe_id          String
+  component_name     String
+  pieces_per_garment Int
+  image_url          String?
 
-  // Relations
-  recipe            Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  verificationItems VerificationItem[]
+  recipe             Recipe  @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  verification_items VerificationItem[]
 
   @@map("recipe_components")
 }
 
-// =========================================
-// CUTTING ORDERS — Production Batches
-// =========================================
-
+// 4. cutting_orders 
 model CuttingOrder {
-  id              String      @id @default(cuid())
-  orderNo         String      @unique @map("order_no")        // Auto-generated: "CO-YYYYMMDD-XXX"
-  recipeId        String      @map("recipe_id")
-  targetQty       Int         @map("target_qty")                // e.g. 50 garments
-  fabricRollId    String      @map("fabric_roll_id")            // e.g. "FAB-ROLL-882"
-  actualFabricYds Float       @map("actual_fabric_yds")         // Actual fabric used (yards)
-  status          OrderStatus @default(CUTTING_IN_PROGRESS)
-  createdBy       String      @map("created_by")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id                String      @id @default(uuid())
+  order_no          String      @unique
+  recipe_id         String
+  target_qty        Int
+  fabric_roll_id    String
+  actual_fabric_yds Float
+  status            OrderStatus @default(CUTTING_IN_PROGRESS)
+  created_by        String
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
 
-  // Relations
-  recipe            Recipe             @relation(fields: [recipeId], references: [id])
-  creator           User               @relation("OrderCreator", fields: [createdBy], references: [id])
-  verificationItems VerificationItem[]
-  verificationLogs  VerificationLog[]
+  recipe            Recipe      @relation(fields: [recipe_id], references: [id])
+  creator           User        @relation(fields: [created_by], references: [id])
+  items             VerificationItem[]
+  verification_logs VerificationLog[]
 
   @@map("cutting_orders")
 }
 
-// =========================================
-// VERIFICATION ITEMS — Per-Component QC Counts
-// =========================================
-
+// 5. verification_items 
 model VerificationItem {
-  id           String             @id @default(cuid())
-  orderId      String             @map("order_id")
-  componentId  String             @map("component_id")
-  expectedQty  Int                @map("expected_qty")    // target_qty × pieces_per_garment
-  actualQty    Int?               @map("actual_qty")      // Verifier's physical count (null = uncounted)
-  status       VerificationStatus?                         // GREEN / YELLOW / RED (null = uncounted)
+  id           String      @id @default(uuid())
+  order_id     String
+  component_id String
+  expected_qty Int
+  actual_qty   Int?
+  status       ItemStatus?
 
-  // Relations
-  order     CuttingOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  component RecipeComponent @relation(fields: [componentId], references: [id])
+  order        CuttingOrder    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  component    RecipeComponent @relation(fields: [component_id], references: [id])
 
-  @@unique([orderId, componentId])
+  @@unique([order_id, component_id])
   @@map("verification_items")
 }
 
-// =========================================
-// VERIFICATION LOGS — Immutable Audit Trail
-// =========================================
-
+// 6. verification_logs 
 model VerificationLog {
-  id             String               @id @default(cuid())
-  orderId        String               @map("order_id")
-  verifierId     String               @map("verifier_id")
-  decision       VerificationDecision
-  rejectionNote  String?              @map("rejection_note")  // Mandatory on REJECTED
-  wastagePct     Float?               @map("wastage_pct")     // Fabric wastage % (on APPROVED)
-  timestamp      DateTime             @default(now())
+  id             String   @id @default(uuid())
+  order_id       String
+  verifier_id    String
+  decision       Decision
+  rejection_note String?
+  wastage_pct    Float?
+  timestamp      DateTime @default(now())
 
-  // Relations
-  order    CuttingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  verifier User         @relation("Verifier", fields: [verifierId], references: [id])
+  order          CuttingOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  verifier       User         @relation(fields: [verifier_id], references: [id])
 
   @@map("verification_logs")
 }
