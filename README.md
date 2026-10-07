@@ -18,7 +18,7 @@ ApparelFlow ERP is a robust, modular Enterprise Resource Planning application de
 * **Framework:** [Next.js 15](https://nextjs.org/) (App Router & Server Actions)
 * **Language:** TypeScript
 * **ORM:** [Prisma 5](https://www.prisma.io/)
-* **Database:** SQLite (for local assessment deployment)
+* **Database:** PostgreSQL (Supabase)
 * **Styling:** Tailwind CSS (Vanilla)
 * **Testing:** Jest + `ts-jest`
 
