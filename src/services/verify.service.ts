@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { determineTrafficLight, calculateWastage } from '@/lib/calculations'
 
 export async function processVerification(
   orderId: string,
@@ -21,14 +22,10 @@ export async function processVerification(
   // 2. Traffic Light Logic - Determine GREEN, YELLOW, RED
   const updatedItems = itemsData.map(input => {
     const expected = order.items.find(i => i.component_id === input.componentId)?.expected_qty || 0;
-    let status: 'GREEN' | 'YELLOW' | 'RED' = 'GREEN';
-
-    if (input.actualQty < expected) {
-      status = 'RED'; // Shortage
-      hasRed = true;
-    } else if (input.actualQty > expected) {
-      status = 'YELLOW'; // Excess
-    }
+    
+    // Use the pure function for business logic
+    const status = determineTrafficLight(expected, input.actualQty);
+    if (status === 'RED') hasRed = true;
 
     return { ...input, expected, status };
   });
@@ -46,8 +43,7 @@ export async function processVerification(
   // 4. Calculate Wastage % (only if approved)
   let wastagePct = null;
   if (decision === 'APPROVED') {
-    const expectedFabric = order.recipe.std_fabric_yards * order.target_qty;
-    wastagePct = ((order.actual_fabric_yds - expectedFabric) / expectedFabric) * 100;
+    wastagePct = calculateWastage(order.actual_fabric_yds, order.recipe.std_fabric_yards, order.target_qty);
   }
 
   // 5. Update data via Database Transaction (Immutable Audit Trail)
