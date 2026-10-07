@@ -72,7 +72,7 @@ export default async function SewingQueuePage() {
                       Fabric Wastage: <span className="font-black">{lastLog?.wastage_pct ? lastLog.wastage_pct.toFixed(2) : '0.00'}%</span>
                     </p>
                     <p className="text-gray-900 font-medium text-lg">
-                      Approved On: <span className="font-black">{new Date(lastLog?.timestamp).toLocaleString()}</span>
+                      Approved On: <span className="font-black">{new Date(lastLog?.timestamp).toLocaleString('en-US', { timeZone: 'Asia/Colombo' })}</span>
                     </p>
                   </div>
 
