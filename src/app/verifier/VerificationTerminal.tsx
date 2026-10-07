@@ -67,28 +67,28 @@ export default function VerificationTerminal({ order }: { order: any }) {
       {/* Components List & Count Inputs */}
       <div className="space-y-4 mb-8">
         {itemsWithStatus.map((item: any) => (
-          <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 border-2 border-gray-800 rounded">
-            <div className="w-1/3">
+          <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-gray-50 border-2 border-gray-800 rounded gap-4 md:gap-0">
+            <div className="w-full md:w-1/3">
               <span className="font-bold text-gray-900 block text-lg">{item.component.component_name}</span>
               <span className="text-gray-700 font-semibold">Expected: {item.expected_qty}</span>
             </div>
             
-            <div className="w-1/3 flex justify-center">
+            <div className="w-full md:w-1/3 flex justify-start md:justify-center">
               <input 
                 type="number" 
                 min="0"
                 placeholder="Enter count"
-                className="w-32 p-2 border-2 border-gray-900 text-black font-bold text-center rounded focus:ring-4 focus:ring-blue-500"
+                className="w-full md:w-32 p-2 border-2 border-gray-900 text-black font-bold text-center rounded focus:ring-4 focus:ring-blue-500"
                 value={counts[item.component_id] === undefined || isNaN(counts[item.component_id]) ? '' : counts[item.component_id]}
                 onChange={(e) => setCounts({...counts, [item.component_id]: parseInt(e.target.value)})}
               />
             </div>
 
-            <div className="w-1/3 flex justify-end">
-              {item.status === 'GREEN' && <span className="bg-green-600 text-white px-4 py-2 rounded font-black text-lg border-2 border-green-900">PASS (MATCH)</span>}
-              {item.status === 'YELLOW' && <span className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded font-black text-lg border-2 border-yellow-700">YELLOW (EXCESS)</span>}
-              {item.status === 'RED' && <span className="bg-red-600 text-white px-4 py-2 rounded font-black text-lg border-2 border-red-900">RED (SHORTAGE)</span>}
-              {item.status === 'UNCOUNTED' && <span className="bg-gray-300 text-gray-800 px-4 py-2 rounded font-bold border-2 border-gray-500">PENDING</span>}
+            <div className="w-full md:w-1/3 flex justify-start md:justify-end">
+              {item.status === 'GREEN' && <span className="bg-green-600 text-white px-4 py-2 rounded font-black text-lg border-2 border-green-900 w-full md:w-auto text-center">PASS (MATCH)</span>}
+              {item.status === 'YELLOW' && <span className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded font-black text-lg border-2 border-yellow-700 w-full md:w-auto text-center">YELLOW (EXCESS)</span>}
+              {item.status === 'RED' && <span className="bg-red-600 text-white px-4 py-2 rounded font-black text-lg border-2 border-red-900 w-full md:w-auto text-center">RED (SHORTAGE)</span>}
+              {item.status === 'UNCOUNTED' && <span className="bg-gray-300 text-gray-800 px-4 py-2 rounded font-bold border-2 border-gray-500 w-full md:w-auto text-center">PENDING</span>}
             </div>
           </div>
         ))}
@@ -105,11 +105,11 @@ export default function VerificationTerminal({ order }: { order: any }) {
           placeholder="Enter reason for rejection..."
         />
         
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <button 
             onClick={() => handleAction('APPROVED')}
             disabled={!canApprove || isSubmitting}
-            className="w-1/2 bg-green-700 hover:bg-green-800 text-white font-black text-xl py-4 rounded border-2 border-green-900 disabled:bg-gray-400 disabled:border-gray-600 disabled:cursor-not-allowed transition-all"
+            className="w-full md:w-1/2 bg-green-700 hover:bg-green-800 text-white font-black text-xl py-4 rounded border-2 border-green-900 disabled:bg-gray-400 disabled:border-gray-600 disabled:cursor-not-allowed transition-all"
           >
             APPROVE BATCH
           </button>
@@ -117,7 +117,7 @@ export default function VerificationTerminal({ order }: { order: any }) {
           <button 
             onClick={() => handleAction('REJECTED')}
             disabled={isSubmitting}
-            className="w-1/2 bg-red-700 hover:bg-red-800 text-white font-black text-xl py-4 rounded border-2 border-red-900 disabled:bg-gray-400 transition-all"
+            className="w-full md:w-1/2 bg-red-700 hover:bg-red-800 text-white font-black text-xl py-4 rounded border-2 border-red-900 disabled:bg-gray-400 transition-all"
           >
             REJECT BATCH
           </button>

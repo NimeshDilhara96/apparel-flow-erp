@@ -50,14 +50,14 @@ export default async function SewingQueuePage() {
 
               return (
                 <div key={order.id} className="bg-white p-6 rounded-lg shadow-lg border-2 border-green-900">
-                  <div className="flex justify-between items-start mb-4 border-b-2 border-gray-900 pb-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start mb-4 border-b-2 border-gray-900 pb-4 gap-4 md:gap-0">
                     <div>
                       <h2 className="text-2xl font-black text-black">{order.order_no}</h2>
                       <p className="text-gray-900 font-bold text-lg">
                         {order.recipe.name} - {order.target_qty} Garments
                       </p>
                     </div>
-                    <span className="bg-green-700 text-white px-4 py-2 rounded font-black text-lg border-2 border-green-900">
+                    <span className="bg-green-700 text-white px-4 py-2 rounded font-black text-lg border-2 border-green-900 w-full md:w-auto text-center">
                       VERIFIED & READY
                     </span>
                   </div>
