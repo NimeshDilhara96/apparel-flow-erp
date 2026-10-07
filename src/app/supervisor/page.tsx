@@ -48,8 +48,10 @@ export default async function SupervisorPage() {
                 <p className="font-bold text-lg text-black">{order.order_no}</p>
                 <p className="text-gray-800 font-medium">{order.recipe.name} - Qty: {order.target_qty}</p>
               </div>
-              <span className={`px-3 py-1 font-bold text-sm rounded h-fit ${
-                order.status === 'PENDING_VERIFICATION' ? 'bg-yellow-300 text-yellow-900 border border-yellow-800' : 'bg-green-600 text-white border border-green-900'
+              <span className={`px-3 py-1 font-bold text-sm rounded h-fit border ${
+                order.status === 'PENDING_VERIFICATION' ? 'bg-yellow-300 text-yellow-900 border-yellow-800' :
+                order.status === 'REJECTED' ? 'bg-red-600 text-white border-red-900' :
+                'bg-green-600 text-white border-green-900'
               }`}>
                 {order.status}
               </span>
