@@ -11,6 +11,7 @@ ApparelFlow ERP is a robust, modular Enterprise Resource Planning application de
 * **Fabric Wastage Calculation:** Automatically calculates the percentage of fabric wasted vs. the standard recipe yardage.
 * **Sewing Queue:** Query-isolated dashboard that ensures only batches marked as `VERIFIED` ever reach the sewing assembly line.
 * **Immutable Audit Trails:** Uses Prisma Database Transactions to securely log verification decisions, verifier IDs, and timestamps.
+* **Schema Validation:** Strictly validates all incoming user inputs and API payloads using **Zod** to prevent injection and guarantee data integrity.
 * **Automated Testing:** Business rules and wastage calculations are extracted into pure functions and covered by comprehensive Jest Unit Tests.
 
 ## Tech Stack
@@ -19,6 +20,7 @@ ApparelFlow ERP is a robust, modular Enterprise Resource Planning application de
 * **Language:** TypeScript
 * **ORM:** [Prisma 5](https://www.prisma.io/)
 * **Database:** PostgreSQL (Supabase)
+* **Validation:** [Zod](https://zod.dev/)
 * **Styling:** Tailwind CSS (Vanilla)
 * **Testing:** Jest + `ts-jest`
 
