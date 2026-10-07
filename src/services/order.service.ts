@@ -2,10 +2,10 @@ import prisma from '@/lib/prisma'
 import { CreateOrderSchema, CreateOrderInput } from '@/schemas/order.schema'
 
 export async function createCuttingOrder(data: CreateOrderInput, userId: string) {
-  // 1. Zod හරහා දත්ත වල නිරවද්‍යතාවය (Validation) පරීක්ෂා කිරීම
+  // zod validation
   const validatedData = CreateOrderSchema.parse(data)
 
-  // 2. අදාළ Recipe එක සහ එහි Components DB එකෙන් ලබාගැනීම
+  // get recipe data from db 
   const recipe = await prisma.recipe.findUnique({
     where: { id: validatedData.recipe_id },
     include: { components: true }
@@ -15,12 +15,12 @@ export async function createCuttingOrder(data: CreateOrderInput, userId: string)
     throw new Error("Recipe not found")
   }
 
-  // 3. Database Transaction එකක් හරහා Order එක සහ Verification Items එකවර නිර්මාණය කිරීම
+  // create order and verification items
   const result = await prisma.$transaction(async (tx) => {
-    // අලුත් Order එක සෑදීම
+    // create new order
     const order = await tx.cuttingOrder.create({
       data: {
-        order_no: `ORD-${Date.now()}`, // සරල අංකයක්
+        order_no: `ORD-${Date.now()}`, // order number
         recipe_id: recipe.id,
         target_qty: validatedData.target_qty,
         fabric_roll_id: validatedData.fabric_roll_id,
@@ -35,10 +35,10 @@ export async function createCuttingOrder(data: CreateOrderInput, userId: string)
       order_id: order.id,
       component_id: comp.id,
       expected_qty: validatedData.target_qty * comp.pieces_per_garment,
-      status: null // තවම ගණන් කර නැත
+      status: null // pending verification
     }))
 
-    // ගණනය කළ අගයන් Verification Items වගුවට ඇතුළත් කිරීම
+    // 
     await tx.verificationItem.createMany({
       data: verificationItems
     })

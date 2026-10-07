@@ -20,11 +20,11 @@ export async function loginWithEmail(email: string) {
   cookieStore.set('user_name', user.full_name, { path: '/' })
   
   if (user.role === 'cutting_supervisor') {
-    redirect('/dashboard/supervisor')
+    redirect('/supervisor')
   } else if (user.role === 'cutting_verifier') {
-    redirect('/dashboard/verifier')
+    redirect('/verifier')
   } else if (user.role === 'sewing_supervisor') {
-    redirect('/dashboard/sewing')
+    redirect('/sewing')
   } else {
     redirect('/')
   }
