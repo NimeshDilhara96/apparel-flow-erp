@@ -1,0 +1,160 @@
+// ApparelFlow ERP - Prisma Schema
+// Production Batch Verification & Sewing Queue Gate (Full-Stack RBAC)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =========================================
+// ENUMS
+// =========================================
+
+enum UserRole {
+  cutting_supervisor
+  cutting_verifier
+  sewing_supervisor
+}
+
+enum OrderStatus {
+  CUTTING_IN_PROGRESS
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+enum VerificationStatus {
+  GREEN   // Actual == Expected (Match)
+  YELLOW  // Actual > Expected (Excess)
+  RED     // Actual < Expected (Shortage)
+}
+
+enum VerificationDecision {
+  APPROVED
+  REJECTED
+}
+
+// =========================================
+// USERS — Factory Personnel with RBAC
+// =========================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  role          UserRole
+  fullName      String   @map("full_name")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdOrders     CuttingOrder[]    @relation("OrderCreator")
+  verificationLogs  VerificationLog[] @relation("Verifier")
+
+  @@map("users")
+}
+
+// =========================================
+// RECIPES — Bill of Materials (Pre-Seeded)
+// =========================================
+
+model Recipe {
+  id              String  @id @default(cuid())
+  recipeCode      String  @unique @map("recipe_code")     // e.g. "REC-BL01"
+  name            String                                    // e.g. "Casual Blouse"
+  category        String                                    // e.g. "Blouse", "Crop Top"
+  stdFabricYards  Float   @map("std_fabric_yards")          // Standard fabric per piece (yards)
+  wastageCap      Float   @map("wastage_cap")               // Max wastage % allowed
+
+  // Relations
+  components    RecipeComponent[]
+  cuttingOrders CuttingOrder[]
+
+  @@map("recipes")
+}
+
+// =========================================
+// RECIPE COMPONENTS — Cut Parts per Garment
+// =========================================
+
+model RecipeComponent {
+  id               String @id @default(cuid())
+  recipeId         String @map("recipe_id")
+  componentName    String @map("component_name")       // e.g. "Front Body Panel"
+  piecesPerGarment Int    @map("pieces_per_garment")   // e.g. 2 for Sleeve Cuffs
+
+  // Relations
+  recipe            Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  verificationItems VerificationItem[]
+
+  @@map("recipe_components")
+}
+
+// =========================================
+// CUTTING ORDERS — Production Batches
+// =========================================
+
+model CuttingOrder {
+  id              String      @id @default(cuid())
+  orderNo         String      @unique @map("order_no")        // Auto-generated: "CO-YYYYMMDD-XXX"
+  recipeId        String      @map("recipe_id")
+  targetQty       Int         @map("target_qty")                // e.g. 50 garments
+  fabricRollId    String      @map("fabric_roll_id")            // e.g. "FAB-ROLL-882"
+  actualFabricYds Float       @map("actual_fabric_yds")         // Actual fabric used (yards)
+  status          OrderStatus @default(CUTTING_IN_PROGRESS)
+  createdBy       String      @map("created_by")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  recipe            Recipe             @relation(fields: [recipeId], references: [id])
+  creator           User               @relation("OrderCreator", fields: [createdBy], references: [id])
+  verificationItems VerificationItem[]
+  verificationLogs  VerificationLog[]
+
+  @@map("cutting_orders")
+}
+
+// =========================================
+// VERIFICATION ITEMS — Per-Component QC Counts
+// =========================================
+
+model VerificationItem {
+  id           String             @id @default(cuid())
+  orderId      String             @map("order_id")
+  componentId  String             @map("component_id")
+  expectedQty  Int                @map("expected_qty")    // target_qty × pieces_per_garment
+  actualQty    Int?               @map("actual_qty")      // Verifier's physical count (null = uncounted)
+  status       VerificationStatus?                         // GREEN / YELLOW / RED (null = uncounted)
+
+  // Relations
+  order     CuttingOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  component RecipeComponent @relation(fields: [componentId], references: [id])
+
+  @@unique([orderId, componentId])
+  @@map("verification_items")
+}
+
+// =========================================
+// VERIFICATION LOGS — Immutable Audit Trail
+// =========================================
+
+model VerificationLog {
+  id             String               @id @default(cuid())
+  orderId        String               @map("order_id")
+  verifierId     String               @map("verifier_id")
+  decision       VerificationDecision
+  rejectionNote  String?              @map("rejection_note")  // Mandatory on REJECTED
+  wastagePct     Float?               @map("wastage_pct")     // Fabric wastage % (on APPROVED)
+  timestamp      DateTime             @default(now())
+
+  // Relations
+  order    CuttingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  verifier User         @relation("Verifier", fields: [verifierId], references: [id])
+
+  @@map("verification_logs")
+}
