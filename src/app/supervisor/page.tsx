@@ -2,6 +2,7 @@ import { getServerSession } from '@/lib/session'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import OrderForm from './OrderForm'
+import Navbar from '@/components/Navbar'
 
 export default async function SupervisorPage() {
   const session = await getServerSession()
@@ -23,7 +24,10 @@ export default async function SupervisorPage() {
   })
 
   return (
-    <div className="grid md:grid-cols-2 gap-8 mt-8 p-8">
+    <div className="min-h-screen bg-gray-100">
+      <Navbar />
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="grid md:grid-cols-2 gap-8 mt-4">
       {/* Left side: Create new Cutting Order form */}
       <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300">
         <h2 className="text-2xl font-black text-gray-900 mb-6 border-b-2 border-gray-900 pb-2">
@@ -51,6 +55,8 @@ export default async function SupervisorPage() {
               </span>
             </div>
           ))}
+        </div>
+      </div>
         </div>
       </div>
     </div>
